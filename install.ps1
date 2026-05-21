@@ -256,115 +256,8 @@ function Get-Architecture {
     }
 }
 
-function Get-StdGitPath {
-    $cmd = Get-Command git.exe -ErrorAction SilentlyContinue
-    $gitPath = $null
-    if ($cmd -and $cmd.Path) {
-        # Ensure we never return a path for git that contains git-ai (recursive)
-        if ($cmd.Path -notmatch "git-ai") {
-            $gitPath = $cmd.Path
-        }
-    }
-
-    # If detection failed or was our own shim, try to recover from saved config
-    if (-not $gitPath) {
-        try {
-            $cfgPath = Join-Path $HOME ".git-ai\config.json"
-            if (Test-Path -LiteralPath $cfgPath) {
-                $cfg = Get-Content -LiteralPath $cfgPath -Raw | ConvertFrom-Json
-                if ($cfg -and $cfg.git_path -and ($cfg.git_path -notmatch 'git-ai') -and (Test-Path -LiteralPath $cfg.git_path)) {
-                    $gitPath = $cfg.git_path
-                }
-            }
-        } catch { }
-    }
-
-    # If still not found, fail with a clear message
-    if (-not $gitPath) {
-        Write-ErrorAndExit "Could not detect a standard git binary on PATH. Please ensure you have Git installed and available on your PATH. If you believe this is a bug with the installer, please file an issue at https://github.com/git-ai-project/git-ai/issues."
-    }
-
-    try {
-        & $gitPath --version | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw 'bad' }
-    } catch {
-        Write-ErrorAndExit "Detected git at $gitPath is not usable (--version failed). Please ensure you have Git installed and available on your PATH. If you believe this is a bug with the installer, please file an issue at https://github.com/git-ai-project/git-ai/issues."
-    }
-
-    return $gitPath
-}
-
-# Ensure $PathToAdd is inserted before any PATH entry that contains "git" (case-insensitive)
-# on the current User's PATH. Machine (system) PATH is intentionally not touched.
-function Set-PathPrependBeforeGit {
-    param(
-        [Parameter(Mandatory = $true)][string]$PathToAdd
-    )
-
-    $sep = ';'
-
-    function NormalizePath([string]$p) {
-        try { return ([IO.Path]::GetFullPath($p.Trim())).TrimEnd('\\').ToLowerInvariant() }
-        catch { return ($p.Trim()).TrimEnd('\\').ToLowerInvariant() }
-    }
-
-    $normalizedAdd = NormalizePath $PathToAdd
-
-    # Helper to build new PATH string with PathToAdd inserted before first 'git' entry
-    function BuildPathWithInsert([string]$existingPath, [string]$toInsert) {
-        $entries = @()
-        if ($existingPath) { $entries = ($existingPath -split $sep) | Where-Object { $_ -and $_.Trim() -ne '' } }
-
-        # De-duplicate and remove any existing instance of $toInsert
-        $list = New-Object System.Collections.Generic.List[string]
-        $seen = New-Object 'System.Collections.Generic.HashSet[string]'
-        foreach ($e in $entries) {
-            $n = NormalizePath $e
-            if (-not $seen.Contains($n) -and $n -ne $normalizedAdd) {
-                $seen.Add($n) | Out-Null
-                $list.Add($e) | Out-Null
-            }
-        }
-
-        # Find first index that matches 'git' anywhere (case-insensitive)
-        $insertIndex = 0
-        for ($i = 0; $i -lt $list.Count; $i++) {
-            if ($list[$i] -match '(?i)git') { $insertIndex = $i; break }
-        }
-
-        $list.Insert($insertIndex, $toInsert)
-        return ($list -join $sep)
-    }
-
-    $userStatus = 'Skipped'
-    try {
-        $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-        $newUserPath = BuildPathWithInsert -existingPath $userPath -toInsert $PathToAdd
-        if ($newUserPath -ne $userPath) {
-            [Environment]::SetEnvironmentVariable('Path', $newUserPath, 'User')
-            $userStatus = 'Updated'
-        } else {
-            $userStatus = 'AlreadyPresent'
-        }
-    } catch {
-        $userStatus = 'Error'
-    }
-
-    # Update current process PATH immediately for this session
-    try {
-        $procPath = $env:PATH
-        $newProcPath = BuildPathWithInsert -existingPath $procPath -toInsert $PathToAdd
-        if ($newProcPath -ne $procPath) { $env:PATH = $newProcPath }
-    } catch { }
-
-    return [PSCustomObject]@{
-        UserStatus = $userStatus
-    }
-}
-
 # Ensure $PathToAdd is on the User PATH (appended if absent). No Machine PATH,
-# no admin required, no positioning logic. Used for new installs that do not
-# get the git wrapper — the goal is only that `git-ai` itself is discoverable.
+# no admin required, no positioning logic.
 function Set-PathEnsureContains {
     param(
         [Parameter(Mandatory = $true)][string]$PathToAdd
@@ -417,21 +310,6 @@ function Set-PathEnsureContains {
     }
 }
 
-# Returns $true when ~/.git-ai/bin already contains an existing git-ai wrapper
-# install — i.e. both git.exe and git-ai.exe are present. New installs intentionally
-# do not create the wrapper; only existing users get it refreshed on upgrade.
-function Test-ExistingGitAiWrapper {
-    param(
-        [Parameter(Mandatory = $true)][string]$InstallDir
-    )
-    $gitExe = Join-Path $InstallDir 'git.exe'
-    $gitAiExe = Join-Path $InstallDir 'git-ai.exe'
-    return (Test-Path -LiteralPath $gitExe) -and (Test-Path -LiteralPath $gitAiExe)
-}
-
-# Detect standard Git early and validate (fail-fast behavior)
-$stdGitPath = Get-StdGitPath
-
 # Detect architecture and OS
 $arch = Get-Architecture
 if (-not $arch) { Write-ErrorAndExit "Unsupported architecture: $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)" }
@@ -463,13 +341,6 @@ if (-not [string]::IsNullOrWhiteSpace($env:GIT_AI_LOCAL_BINARY)) {
 
 # Install directory: %USERPROFILE%\.git-ai\bin
 $installDir = Join-Path $HOME ".git-ai\bin"
-
-# Capture whether this is an existing-wrapper upgrade BEFORE we create the install
-# directory or write any new files. Wrapper artifacts (git.exe, git-og.cmd, the
-# PATH-prepend that forces our shim before any system git entry) are only
-# refreshed for users who already had them — new installs do not get them.
-$existingWrapper = Test-ExistingGitAiWrapper -InstallDir $installDir
-
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null
 
 Write-Host ("Downloading git-ai (release: {0})..." -f $releaseTag)
@@ -541,27 +412,14 @@ if (Test-Path -LiteralPath $finalExe) {
 Move-Item -Force -Path $tmpFile -Destination $finalExe
 try { Unblock-File -Path $finalExe -ErrorAction SilentlyContinue } catch { }
 
-if ($existingWrapper) {
-    # Refresh wrapper artifacts for users who already had them. New installs
-    # intentionally skip this — git-ai routes via the daemon/trace2 instead
-    # of via the git proxy.
-    $gitShim = Join-Path $installDir 'git.exe'
-
-    # Wait for git.exe shim to be available if it exists and is in use
-    if (Test-Path -LiteralPath $gitShim) {
-        if (-not (Wait-ForFileAvailable -Path $gitShim -InstallDir $installDir -MaxWaitSeconds 300 -RetryIntervalSeconds 5)) {
-            Write-ErrorAndExit "Timeout waiting for $gitShim to be available. Please close any running git processes and try again."
-        }
+# Refresh git.exe for existing wrapper users (it's a copy, not a symlink on Windows)
+$gitShim = Join-Path $installDir 'git.exe'
+if (Test-Path -LiteralPath $gitShim) {
+    if (-not (Wait-ForFileAvailable -Path $gitShim -InstallDir $installDir -MaxWaitSeconds 300 -RetryIntervalSeconds 5)) {
+        Write-ErrorAndExit "Timeout waiting for $gitShim to be available. Please close any running git processes and try again."
     }
-
     Copy-Item -Force -Path $finalExe -Destination $gitShim
     try { Unblock-File -Path $gitShim -ErrorAction SilentlyContinue } catch { }
-
-    # Create a shim so calling `git-og` invokes the standard Git
-    $gitOgShim = Join-Path $installDir 'git-og.cmd'
-    $gitOgShimContent = "@echo off$([Environment]::NewLine)`"$stdGitPath`" %*$([Environment]::NewLine)"
-    Set-Content -Path $gitOgShim -Value $gitOgShimContent -Encoding ASCII -Force
-    try { Unblock-File -Path $gitOgShim -ErrorAction SilentlyContinue } catch { }
 }
 
 # Login user with install token if provided
@@ -589,18 +447,12 @@ try {
 # Best-effort restart only for daemon-initiated self-updates.
 Start-DaemonIfRequested
 
-# Update PATH. For existing-wrapper users, prepend before any Git entry on the
-# User PATH so the git.exe shim shadows real git. For new users (no wrapper),
-# just ensure our install dir is on User PATH so `git-ai` is discoverable.
-# Machine (system) PATH is never touched — no admin required either way.
 $skipPathUpdate = $env:GIT_AI_SKIP_PATH_UPDATE -eq '1'
 if ($skipPathUpdate) {
     Write-Warning 'Skipping PATH updates because GIT_AI_SKIP_PATH_UPDATE=1'
     $pathUpdate = [PSCustomObject]@{
         UserStatus = 'Skipped'
     }
-} elseif ($existingWrapper) {
-    $pathUpdate = Set-PathPrependBeforeGit -PathToAdd $installDir
 } else {
     $pathUpdate = Set-PathEnsureContains -PathToAdd $installDir
 }
@@ -679,26 +531,6 @@ if ($gitBashConfigured) {
     Write-Success "Successfully configured Git Bash ($targetBashConfig)"
 } elseif ($gitBashAlreadyConfigured) {
     Write-Success "Git Bash already configured ($targetBashConfig)"
-}
-
-# Write JSON config at %USERPROFILE%\.git-ai\config.json (only if it doesn't exist)
-try {
-    $configDir = Join-Path $HOME '.git-ai'
-    $configJsonPath = Join-Path $configDir 'config.json'
-    New-Item -ItemType Directory -Force -Path $configDir | Out-Null
-
-    if (-not (Test-Path -LiteralPath $configJsonPath)) {
-        $cfg = @{
-            git_path = $stdGitPath
-            feature_flags = @{
-                async_mode = $true
-            }
-        } | ConvertTo-Json -Depth 3 -Compress
-        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-        [System.IO.File]::WriteAllText($configJsonPath, $cfg, $utf8NoBom)
-    }
-} catch {
-    Write-Host "Warning: Failed to write config.json: $($_.Exception.Message)" -ForegroundColor Yellow
 }
 
 Write-Host 'Close and reopen your terminal and IDE sessions to use git-ai.' -ForegroundColor Yellow

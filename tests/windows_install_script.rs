@@ -495,11 +495,6 @@ fn windows_install_script_refreshes_wrapper_for_existing_users() {
         installed_git_wrapper_path(&repo).exists(),
         "git.exe wrapper should be refreshed for existing users"
     );
-    let bin_dir = repo.test_home_path().join(".git-ai").join("bin");
-    assert!(
-        bin_dir.join("git-og.cmd").exists(),
-        "git-og.cmd should be refreshed for existing users"
-    );
 }
 
 #[test]

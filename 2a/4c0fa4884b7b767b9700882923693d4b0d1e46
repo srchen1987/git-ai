@@ -1,0 +1,19 @@
+src/daemon/transcript_worker.rs
+  s_8543da9193dd24::t_d6b865ad1d42bb 500
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2a4c0fa4884b7b767b9700882923693d4b0d1e46",
+  "prompts": {},
+  "sessions": {
+    "s_8543da9193dd24": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_192bac0e4ffehB9LbRnD61F97s",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>"
+    }
+  }
+}

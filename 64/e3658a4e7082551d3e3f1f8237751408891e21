@@ -1,0 +1,19 @@
+src/mdm/agents/kilo.rs
+  s_9145d2c142e194::t_6c85a08827e32c 228
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "64e3658a4e7082551d3e3f1f8237751408891e21",
+  "prompts": {},
+  "sessions": {
+    "s_9145d2c142e194": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_1932b31d3ffeFhdvL6eHosoeUT",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>"
+    }
+  }
+}

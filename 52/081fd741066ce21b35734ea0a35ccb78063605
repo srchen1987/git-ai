@@ -1,0 +1,21 @@
+src/authorship/virtual_attribution.rs
+  s_4a65149292d2ab::t_7f9afc30523ffe 845,867
+  s_4a65149292d2ab::t_c52928310ed276 664,686
+  s_4a65149292d2ab::t_a048938e24e2f7 467,475,478,494
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "52081fd741066ce21b35734ea0a35ccb78063605",
+  "prompts": {},
+  "sessions": {
+    "s_4a65149292d2ab": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_192558355ffePBu0myh9Ecuncu",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>"
+    }
+  }
+}

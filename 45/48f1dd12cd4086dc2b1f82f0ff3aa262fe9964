@@ -1,0 +1,25 @@
+agent-support/intellij/src/main/kotlin/org/jetbrains/plugins/template/listener/StackTraceAnalyzer.kt
+  s_095cf95efe5864::t_9b0a7d240e517e 40-43,45
+  s_095cf95efe5864::t_3f71720469df47 44,46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "4548f1dd12cd4086dc2b1f82f0ff3aa262fe9964",
+  "prompts": {},
+  "sessions": {
+    "s_095cf95efe5864": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_172fe615fffex85WmYkAg1Epfa",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>",
+      "custom_attributes": {
+        "edit_kind": "file_edit",
+        "session_id": "ses_172fe615fffex85WmYkAg1Epfa",
+        "tool_use_id": "call_dff4a90f020545fa83c8f34b"
+      }
+    }
+  }
+}

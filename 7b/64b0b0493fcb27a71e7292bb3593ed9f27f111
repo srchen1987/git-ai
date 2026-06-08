@@ -1,0 +1,26 @@
+src/commands/checkpoint_agent/bash_tool.rs
+  s_3b828e350c73f4::t_90df343801870a 340-347,349
+src/mdm/agents/kilo.rs
+  s_3b828e350c73f4::t_6c18e89c895224 25-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7b64b0b0493fcb27a71e7292bb3593ed9f27f111",
+  "prompts": {},
+  "sessions": {
+    "s_3b828e350c73f4": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_159b9d79bffeF6p1o73H6SzDNp",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>",
+      "custom_attributes": {
+        "tool_use_id": "call_f33493c4d4844da497c1b79e",
+        "edit_kind": "file_edit",
+        "session_id": "ses_159b9d79bffeF6p1o73H6SzDNp"
+      }
+    }
+  }
+}

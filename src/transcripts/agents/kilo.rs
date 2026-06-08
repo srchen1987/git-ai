@@ -22,15 +22,11 @@ impl KiloAgent {
         Self { batch_size }
     }
 
-    fn open_sqlite_readonly(path: &Path) -> Result<Connection, TranscriptError> {
+    pub(crate) fn open_sqlite_readonly(path: &Path) -> Result<Connection, TranscriptError> {
         let conn =
             Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY).map_err(|e| {
                 TranscriptError::Fatal {
-                    message: format!(
-                        "Failed to open Kilo database {}: {}",
-                        path.display(),
-                        e
-                    ),
+                    message: format!("Failed to open Kilo database {}: {}", path.display(), e),
                 }
             })?;
 
@@ -142,8 +138,8 @@ impl KiloAgent {
 
         let mut parts_by_message: HashMap<String, Vec<serde_json::Value>> = HashMap::new();
         for row in rows {
-            let (_id, message_id, _row_session_id, _time_created, _time_updated, data) =
-                row.map_err(|e| TranscriptError::Fatal {
+            let (_id, message_id, _row_session_id, _time_created, _time_updated, data) = row
+                .map_err(|e| TranscriptError::Fatal {
                     message: format!("Failed to read part row: {}", e),
                 })?;
 
@@ -169,7 +165,12 @@ impl KiloAgent {
         #[cfg(target_os = "macos")]
         {
             let home = std::env::var("HOME").ok()?;
-            Some(PathBuf::from(home).join(".local").join("share").join("kilo"))
+            Some(
+                PathBuf::from(home)
+                    .join("Library")
+                    .join("Application Support")
+                    .join("kilo"),
+            )
         }
 
         #[cfg(target_os = "linux")]
@@ -178,7 +179,12 @@ impl KiloAgent {
                 Some(PathBuf::from(xdg_data).join("kilo"))
             } else {
                 let home = std::env::var("HOME").ok()?;
-                Some(PathBuf::from(home).join(".local").join("share").join("kilo"))
+                Some(
+                    PathBuf::from(home)
+                        .join(".local")
+                        .join("share")
+                        .join("kilo"),
+                )
             }
         }
 
@@ -236,11 +242,11 @@ impl KiloAgent {
     ) -> Result<Vec<DiscoveredSession>, TranscriptError> {
         let conn = Self::open_sqlite_readonly(db_path)?;
 
-        let mut stmt = conn
-            .prepare("SELECT id FROM session")
-            .map_err(|e| TranscriptError::Fatal {
-                message: format!("Failed to prepare session query: {}", e),
-            })?;
+        let mut stmt =
+            conn.prepare("SELECT id FROM session")
+                .map_err(|e| TranscriptError::Fatal {
+                    message: format!("Failed to prepare session query: {}", e),
+                })?;
 
         let rows = stmt
             .query_map([], |row| row.get::<_, String>(0))
@@ -264,7 +270,10 @@ impl KiloAgent {
                 .flatten();
 
             sessions.push(DiscoveredSession {
-                session_id: crate::authorship::authorship_log_serialization::generate_session_id(&session_id, "kilo"),
+                session_id: crate::authorship::authorship_log_serialization::generate_session_id(
+                    &session_id,
+                    "kilo",
+                ),
                 tool: "kilo".to_string(),
                 transcript_path: db_path.to_path_buf(),
                 transcript_format: crate::transcripts::sweep::TranscriptFormat::KiloCodeSqlite,
@@ -303,11 +312,10 @@ impl Agent for KiloAgent {
             })?
         };
 
-        let db_path = Self::resolve_sqlite_db_path(&kilocode_path).ok_or_else(|| {
-            TranscriptError::Fatal {
+        let db_path =
+            Self::resolve_sqlite_db_path(&kilocode_path).ok_or_else(|| TranscriptError::Fatal {
                 message: format!("Could not find kilo.db at {}", kilocode_path.display()),
-            }
-        })?;
+            })?;
 
         Self::discover_sessions_from_db(&db_path)
     }
@@ -442,10 +450,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let db_path = dir.path().join("kilo.db");
         std::fs::write(&db_path, b"dummy").unwrap();
-        assert_eq!(
-            KiloAgent::resolve_sqlite_db_path(&db_path),
-            Some(db_path)
-        );
+        assert_eq!(KiloAgent::resolve_sqlite_db_path(&db_path), Some(db_path));
     }
 
     #[test]
@@ -461,10 +466,7 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let db_path = dir.path().join("kilo.db");
         std::fs::write(&db_path, b"dummy").unwrap();
-        assert_eq!(
-            KiloAgent::resolve_sqlite_db_path(dir.path()),
-            Some(db_path)
-        );
+        assert_eq!(KiloAgent::resolve_sqlite_db_path(dir.path()), Some(db_path));
     }
 
     #[test]
@@ -491,10 +493,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let db_path = dir.path().join("kilo.db");
         let conn = rusqlite::Connection::open(&db_path).unwrap();
-        conn.execute_batch(
-            "CREATE TABLE session (id TEXT PRIMARY KEY, parent_id TEXT);",
-        )
-        .unwrap();
+        conn.execute_batch("CREATE TABLE session (id TEXT PRIMARY KEY, parent_id TEXT);")
+            .unwrap();
         drop(conn);
 
         let sessions = KiloAgent::discover_sessions_from_db(&db_path).unwrap();

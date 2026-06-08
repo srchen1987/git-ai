@@ -13,11 +13,23 @@ pub struct KiloInstaller;
 
 impl KiloInstaller {
     fn plugin_path() -> PathBuf {
-        home_dir()
-            .join(".config")
-            .join("kilo")
-            .join("plugins")
-            .join("git-ai.ts")
+        #[cfg(target_os = "macos")]
+        {
+            home_dir()
+                .join("Library")
+                .join("Application Support")
+                .join("kilo")
+                .join("plugins")
+                .join("git-ai.ts")
+        }
+        #[cfg(not(target_os = "macos"))]
+        {
+            home_dir()
+                .join(".config")
+                .join("kilo")
+                .join("plugins")
+                .join("git-ai.ts")
+        }
     }
 
     fn generate_plugin_content(binary_path: &Path) -> String {
@@ -41,7 +53,10 @@ impl HookInstaller for KiloInstaller {
 
     fn check_hooks(&self, params: &HookInstallerParams) -> Result<HookCheckResult, GitAiError> {
         let has_binary = binary_exists("kilo") || binary_exists("kilocode");
-        let has_global_config = home_dir().join(".config").join("kilo").exists();
+        let has_global_config = Self::plugin_path()
+            .parent()
+            .and_then(|p| p.parent())
+            .map_or(false, |p| p.exists());
 
         if !has_binary && !has_global_config {
             return Ok(HookCheckResult {

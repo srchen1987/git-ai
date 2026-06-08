@@ -337,8 +337,10 @@ pub fn classify_tool(agent: Agent, tool_name: &str) -> ToolClass {
             "bash" | "shell" => ToolClass::Bash,
             _ => ToolClass::Skip,
         },
-         Agent::Kilo => match tool_name {
-            "edit" | "write" | "patch" | "multiedit" | "apply_patch" | "applypatch" => ToolClass::FileEdit,
+        Agent::Kilo => match tool_name {
+            "edit" | "write" | "patch" | "multiedit" | "apply_patch" | "applypatch" => {
+                ToolClass::FileEdit
+            }
             "bash" | "shell" => ToolClass::Bash,
             _ => ToolClass::Skip,
         },

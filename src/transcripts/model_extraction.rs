@@ -15,9 +15,8 @@ pub fn extract_model(
         | TranscriptFormat::GeminiJsonl => extract_model_from_jsonl_tail(path),
         TranscriptFormat::CopilotSessionJson => extract_model_from_copilot_session_json(path),
         TranscriptFormat::AmpThreadJson => extract_model_from_amp_thread_json(path),
-        TranscriptFormat::OpenCodeSqlite | TranscriptFormat::KiloCodeSqlite => {
-            extract_model_from_opencode_sqlite(path, session_id)
-        }
+        TranscriptFormat::OpenCodeSqlite => extract_model_from_opencode_sqlite(path, session_id),
+        TranscriptFormat::KiloCodeSqlite => extract_model_from_kilo_sqlite(path, session_id),
         // Droid uses extract_model_from_droid_settings() with the settings path instead
         _ => Ok(None),
     }
@@ -267,6 +266,48 @@ fn extract_model_from_opencode_sqlite(
                 return Some(model.to_string());
             }
             // Try assistant message format: data.modelID
+            json.get("modelID")
+                .and_then(|v| v.as_str())
+                .map(String::from)
+        });
+
+    Ok(result)
+}
+
+fn extract_model_from_kilo_sqlite(
+    path: &Path,
+    session_id: Option<&str>,
+) -> Result<Option<String>, TranscriptError> {
+    let conn = match crate::transcripts::agents::KiloAgent::open_sqlite_readonly(path) {
+        Ok(c) => c,
+        Err(_) => return Ok(None),
+    };
+
+    let (query, params): (&str, Vec<Box<dyn rusqlite::types::ToSql>>) = match session_id {
+        Some(sid) => (
+            "SELECT data FROM message WHERE session_id = ? AND (data LIKE '%\"modelID\"%' OR data LIKE '%\"model\"%') LIMIT 1",
+            vec![Box::new(sid.to_string())],
+        ),
+        None => (
+            "SELECT data FROM message WHERE (data LIKE '%\"modelID\"%' OR data LIKE '%\"model\"%') LIMIT 1",
+            vec![],
+        ),
+    };
+
+    let result: Option<String> = conn
+        .query_row(query, rusqlite::params_from_iter(params.iter()), |row| {
+            row.get::<_, String>(0)
+        })
+        .ok()
+        .and_then(|data| {
+            let json: serde_json::Value = serde_json::from_str(&data).ok()?;
+            if let Some(model) = json
+                .get("model")
+                .and_then(|m| m.get("modelID"))
+                .and_then(|v| v.as_str())
+            {
+                return Some(model.to_string());
+            }
             json.get("modelID")
                 .and_then(|v| v.as_str())
                 .map(String::from)

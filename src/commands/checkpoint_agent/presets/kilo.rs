@@ -170,7 +170,7 @@ impl KiloPreset {
     }
 
     fn lookup_parent_session(db_path: &Path, session_id: &str) -> Option<String> {
-        let conn = crate::transcripts::agents::opencode::open_sqlite_readonly(db_path).ok()?;
+        let conn = crate::transcripts::agents::KiloAgent::open_sqlite_readonly(db_path).ok()?;
         conn.query_row(
             "SELECT parent_id FROM session WHERE id = ?",
             [session_id],
@@ -197,7 +197,10 @@ impl KiloPreset {
                 let home = dirs::home_dir().ok_or_else(|| {
                     GitAiError::Generic("Could not determine home directory".to_string())
                 })?;
-                Ok(home.join(".local").join("share").join("kilo"))
+                Ok(home
+                    .join("Library")
+                    .join("Application Support")
+                    .join("kilo"))
             }
         }
 

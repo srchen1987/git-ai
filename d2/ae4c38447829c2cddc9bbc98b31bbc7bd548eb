@@ -1,0 +1,24 @@
+src/commands/checkpoint_agent/presets/kilo.rs
+  s_3b828e350c73f4::t_e2a99bc6482b4f 189-192,203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d2ae4c38447829c2cddc9bbc98b31bbc7bd548eb",
+  "prompts": {},
+  "sessions": {
+    "s_3b828e350c73f4": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_159b9d79bffeF6p1o73H6SzDNp",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>",
+      "custom_attributes": {
+        "session_id": "ses_159b9d79bffeF6p1o73H6SzDNp",
+        "tool_use_id": "call_0c6e7b3bdced43cb9fdda060",
+        "edit_kind": "file_edit"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+src/commands/checkpoint_agent/bash_tool.rs
+  h_82990a09bc17b5 341
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "6cd59e1b5f44560ab9f7c32e72b06d7fc9634d6d",
+  "prompts": {},
+  "humans": {
+    "h_82990a09bc17b5": {
+      "author": "srchen1987 <suxuan696@163.com>"
+    }
+  }
+}

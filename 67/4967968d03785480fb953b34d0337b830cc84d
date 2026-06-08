@@ -1,0 +1,40 @@
+src/commands/checkpoint_agent/presets/kilo.rs
+  s_d5eb7795d6e36f::t_c6341083dbda54 200-203
+  s_d5eb7795d6e36f::t_ef57356aa13d47 173
+src/transcripts/agents/kilo.rs
+  s_d5eb7795d6e36f::t_c6341083dbda54 29,141-142,168-173,182-187,245-249,273-276,315-316,318,453,469,496-497
+  s_d5eb7795d6e36f::t_9fc8d8a2c9acd9 25
+src/mdm/agents/kilo.rs
+  s_d5eb7795d6e36f::t_c6341083dbda54 56-59
+  s_d5eb7795d6e36f::t_ba0527c9baf5ba 16-32
+src/transcripts/model_extraction.rs
+  s_d5eb7795d6e36f::t_2ef83def7c3fdf 277-280,285-318
+  s_d5eb7795d6e36f::t_fc0480bf085d72 18
+  s_d5eb7795d6e36f::t_41c9474d214e0b 19
+  s_d5eb7795d6e36f::t_37f688616747f4 281-284
+src/daemon/transcript_worker.rs
+  s_d5eb7795d6e36f::t_c6341083dbda54 500-501
+src/commands/checkpoint_agent/bash_tool.rs
+  s_d5eb7795d6e36f::t_c6341083dbda54 340-343
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "674967968d03785480fb953b34d0337b830cc84d",
+  "prompts": {},
+  "sessions": {
+    "s_d5eb7795d6e36f": {
+      "agent_id": {
+        "tool": "kilo",
+        "id": "ses_159e9bff5ffe0dDDX4fuDvRskT",
+        "model": "deepseek-v3-0324"
+      },
+      "human_author": "srchen1987 <suxuan696@163.com>",
+      "custom_attributes": {
+        "session_id": "ses_159e9bff5ffe0dDDX4fuDvRskT",
+        "tool_use_id": "call_0818d80363d6445d812659c9",
+        "edit_kind": "bash"
+      }
+    }
+  }
+}
